@@ -141,13 +141,28 @@ const withoutShortLinks = (text: string) =>
 const truncate = (text: string) =>
   text.length > MAX_TITLE_CHARS ? `${text.slice(0, MAX_TITLE_CHARS - 1)}…` : text;
 
+/**
+ * x.com serves og:title/og:image only to known link-preview bots; everyone else gets a JS shell.
+ * Deliberate workaround, chosen by the owner: X may stop it anytime, and oEmbed stays the fallback.
+ */
+async function fetchXPreviewPage(url: string, fetchImpl: typeof fetch): Promise<string | null> {
+  for (let tryNumber = 1; tryNumber <= MAX_ATTEMPTS; tryNumber++) {
+    try {
+      const html = await fetchHtml(url, fetchImpl, X_PREVIEW_USER_AGENT);
+      if (html) return html;
+      console.warn(`X preview page attempt ${tryNumber}/${MAX_ATTEMPTS} returned no HTML`, url);
+    } catch (error) {
+      console.warn(`X preview page attempt ${tryNumber}/${MAX_ATTEMPTS} failed`, url, error);
+    }
+  }
+  return null;
+}
+
 async function xPostMetadata(url: string, fetchImpl: typeof fetch): Promise<LinkMetadata> {
   const oembedUrl = `https://publish.x.com/oembed?omit_script=1&url=${encodeURIComponent(url)}`;
   const [oembed, botPage] = await Promise.all([
     fetchJson<{ author_name?: string; html?: string }>(oembedUrl, fetchImpl),
-    // x.com serves og:title/og:image only to known link-preview bots; everyone else gets a JS shell.
-    // Deliberate workaround, chosen by the owner: X may stop it anytime, and oEmbed stays the fallback.
-    fetchHtml(url, fetchImpl, X_PREVIEW_USER_AGENT).catch(() => null),
+    fetchXPreviewPage(url, fetchImpl),
   ]);
 
   const page = botPage ? parseHtml(botPage, url) : null;

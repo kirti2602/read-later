@@ -120,6 +120,24 @@ describe("fetchMetadata", () => {
     expect(meta.type).toBe("thread");
   });
 
+  it("retries the X preview page once when it fails", async () => {
+    let pageCalls = 0;
+    const fetchImpl: typeof fetch = async (input) => {
+      if (String(input).startsWith("https://publish.x.com/oembed")) {
+        return Response.json({ author_name: "A", html: `<blockquote><p>text</p></blockquote>` });
+      }
+      pageCalls += 1;
+      if (pageCalls === 1) throw new TypeError("fetch failed");
+      return htmlResponse(html(`<meta property="og:image" content="https://pbs.twimg.com/media/X.jpg">`));
+    };
+    const meta = await fetchMetadata(
+      { url: "https://x.com/a/status/1", canonicalUrl: "https://x.com/a/status/1" },
+      fetchImpl,
+    );
+    expect(pageCalls).toBe(2);
+    expect(meta.thumbnailUrl).toBe("https://pbs.twimg.com/media/X.jpg");
+  });
+
   it("drops t.co and pic links from X text, falling back to the author", async () => {
     const xMeta = (p: string) =>
       fetchMetadata(

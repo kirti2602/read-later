@@ -40,6 +40,12 @@ export function canonicalizeUrl(input: string): { url: string; canonicalUrl: str
   c.hostname = c.hostname.replace(/^(www|m|mobile)\./, "");
 
   if (c.hostname === "twitter.com") c.hostname = "x.com";
+  // A post is its status id; share params (?a=, ?s=, ?t=) and /photo/1-style suffixes are the same post.
+  const xPost = c.hostname === "x.com" ? c.pathname.match(/^\/([^/]+)\/status\/(\d+)/) : null;
+  if (xPost) {
+    c.pathname = `/${xPost[1].toLowerCase()}/status/${xPost[2]}`;
+    c.search = "";
+  }
   if (c.hostname === "youtu.be") {
     const videoId = c.pathname.slice(1);
     c.hostname = "youtube.com";

@@ -61,6 +61,15 @@ describe("canonicalizeUrl", () => {
     expect(canon("https://example.com/a?s=20&t=abc")).toBe("https://example.com/a?s=20&t=abc");
   });
 
+  it("reduces X post links to user and status id", () => {
+    expect(canon("https://x.com/ClaudeDevs/status/2121392666244186327?a=34-yNyrVh9tuxuTZpvk&s=20")).toBe(
+      "https://x.com/claudedevs/status/2121392666244186327",
+    );
+    expect(canon("https://x.com/claudedevs/status/2121392666244186327/photo/1")).toBe(
+      "https://x.com/claudedevs/status/2121392666244186327",
+    );
+  });
+
   it("keeps only the video id on YouTube watch links", () => {
     expect(
       canon("https://www.youtube.com/watch?v=WHqbqzqeskw&list=RDWHqbqzqeskw&start_radio=1&pp=abc&t=42s"),
