@@ -1,23 +1,14 @@
 import type { Metadata } from "next";
-import { Hanken_Grotesk, IBM_Plex_Mono, Newsreader } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const hanken = Hanken_Grotesk({
-  variable: "--font-hanken",
-  subsets: ["latin"],
-  weight: ["500", "600"],
-});
-
-const newsreader = Newsreader({
-  variable: "--font-newsreader",
-  subsets: ["latin"],
-  axes: ["opsz"],
-});
-
-const plexMono = IBM_Plex_Mono({
-  variable: "--font-plex-mono",
-  subsets: ["latin"],
-  weight: ["400", "500"],
+const chillax = localFont({
+  variable: "--font-chillax",
+  display: "swap",
+  src: [
+    { path: "./fonts/chillax-500.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/chillax-600.woff2", weight: "600", style: "normal" },
+  ],
 });
 
 export const metadata: Metadata = {
@@ -33,7 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${hanken.variable} ${newsreader.variable} ${plexMono.variable}`}
+      className={chillax.variable}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: MODE_SCRIPT }} />

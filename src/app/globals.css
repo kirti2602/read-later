@@ -1,39 +1,32 @@
-/* Hallmark · shape: app screen · genre: editorial · theme: Almanac (deal 1/3, seed personal-read-later-app-save-3c1d·2122b63c·2026-11-14·r0) · redesign: full
- * nav: top bar, wordmark left, colour mode and sign out right · signature: the week's sheet, a dated head over numbered ruled rows with minutes in mono · states: loading, empty, error, full, preview pending, undo
- * axes: mid/grotesk-sans/chromatic-magenta · posture: restrained · modes: light+dark · contrast: pass · v2.0.0 */
-/* Hallmark · pre-emit critique: P4 H5 E4 S4 R5 V4 · weakest: S, a reading list could be any list app; the dated weekly sheet with numbered rows and summed minutes makes it this product's Saturday page */
-/* Hallmark · finish-review: subagent · 8 findings · 8 resolved (title underline at rest, thumbnail links, 3-line titles on phones, sheet opens on the dated head, honest minute total, dark hover 6.4:1, login centred, skeleton/error/failed save captured) · gap: none */
-/* Hallmark · dropped {markDone.bind(null, link.id)}, {deleteLink.bind(null, link.id)}, button in get javascript:throw · Done and Delete left their per-row forms for buttons in LinkList so each can be undone in place */
-/* Hallmark · dropped onChange={(e) => setUrl(e.target.value)} · the save field's change handler now also clears a stale message, same field and value */
-/* Hallmark · reworded "Read Later" to "Week of 14 November" · the name moved into the top bar wordmark; the sheet head carries the week */
-/* Hallmark · dropped button · the sign-in button stays; it now declares type="submit" as craft.md asks, so its selector changed */
-/* Hallmark · dismissed 28a · thumbnails are 80px plates beside text rows; the sheet heading is the largest paint, not an image */
+/* Hallmark · shape: app screen · genre: playful · theme: Hum (by request) · redesign: full
+ * nav: sidebar on desktop, bottom tab bar on phones · signature: the week's card grid, each link a round card with its picture, type and length set on the image · states: loading, empty, error, full, preview pending, undo, finished nudge, player
+ * axes: light/rounded-sans/chromatic-yellow · posture: full-palette (pear action, blue links and focus, mint done, coral sparingly) · modes: light+dark · motion: spring on the primary only, snap elsewhere · contrast: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V5 · weakest: R, cards carry badge, duration, favicon and actions; kept every extra on the image or behind hover so the title still leads */
+/* Hallmark · waive 26b · globals.css @utility stock declares &:active, nested where the static tier cannot see it · every card-stock button presses flat on :active through the stock utility */
+/* Hallmark · dismissed 28a · thumbnails are lazy below the first row; the first paint is the sheet heading and save row */
 @import "tailwindcss";
 @import "./tokens.css";
 @import "./base.css" layer(base);
 
 @layer base {
   body {
+    background: var(--grain), var(--color-paper);
     color: var(--color-ink-2);
+    font-weight: 500;
   }
 
-  [data-mode="dark"] body {
-    font-weight: 350;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-mode]) body {
-      font-weight: 350;
-    }
+  h1,
+  h2,
+  h3 {
+    color: var(--color-ink);
   }
 }
 
 @utility num {
-  font-family: var(--font-outlier);
   font-variant-numeric: tabular-nums;
 }
 
-/* Expands a compact app control to a 44px touch target without changing its look. */
+/* Expands a compact control to a 44px touch target without changing its look. */
 @utility hit {
   position: relative;
 
@@ -41,5 +34,81 @@
     content: "";
     position: absolute;
     inset: -6px -4px;
+  }
+}
+
+/* Hum's card stock: a solid edge below that rises on hover and presses flat on click. */
+@utility stock {
+  --edge: 4px;
+  box-shadow: 0 var(--edge) 0 0 var(--stock-edge, var(--color-edge));
+  transition:
+    translate var(--dur-micro) var(--ease-snap),
+    box-shadow var(--dur-micro) var(--ease-snap);
+
+  @media (hover: hover) {
+    &:hover {
+      --edge: 6px;
+      translate: 0 -2px;
+    }
+  }
+
+  &:active {
+    --edge: 1px;
+    translate: 0 3px;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@utility shimmer {
+  background: linear-gradient(90deg, var(--color-paper-2) 25%, var(--color-paper-3) 50%, var(--color-paper-2) 75%);
+  background-size: 200% 100%;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: shimmer 1.4s linear infinite;
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility animate-pop {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: pop 320ms var(--ease-spring) both;
+  }
+}
+
+@utility animate-rise {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: rise 320ms var(--ease-snap) both;
   }
 }

@@ -1,19 +1,13 @@
 import { Suspense } from "react";
 import { ListSkeleton } from "@/links/components/ListSkeleton";
-import { ReadingList } from "@/links/components/ReadingList";
-import { SaveForm } from "@/links/components/SaveForm";
-import { AppHeader } from "@/shell/AppHeader";
+import { Workspace } from "@/links/components/Workspace";
 
 export default function Home({ searchParams }: PageProps<"/">) {
   return (
-    <>
-      <AppHeader signedIn />
-      <main className="mx-auto max-w-(--container-app) px-4 py-6 sm:px-6 sm:py-10">
-        <SaveForm />
-        <Suspense fallback={<ListSkeleton />}>
-          <ReadingList searchParams={searchParams} />
-        </Suspense>
-      </main>
-    </>
+    <div className="min-h-dvh lg:grid lg:grid-cols-[var(--sidebar)_minmax(0,1fr)]">
+      <Suspense fallback={<ListSkeleton />}>
+        <Workspace searchParams={searchParams} />
+      </Suspense>
+    </div>
   );
 }
