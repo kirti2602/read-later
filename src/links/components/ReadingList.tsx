@@ -39,14 +39,15 @@ export async function ReadingList({
     digestTime: user.digestTime,
   });
   const links = await listLinks(db, user.id, view, start);
-  const { count, minutes } = listSummary(links);
+  const { count, minutes, timed } = listSummary(links);
   const weekOf = formatDay(start, user.timezone);
   const heading =
     view === "week" ? `Week of ${weekOf}` : view === "older" ? `Saved before ${weekOf}` : "Read and watched";
 
   return (
-    <section aria-labelledby="sheet-heading" className="mt-4">
-      <nav aria-label="Views" className="-mx-1 flex gap-1 overflow-x-auto border-b border-rule">
+    <section aria-labelledby="sheet-heading" className="mt-6">
+      {/* The current tab's magenta bar overlays the sheet's ink rule, so the tab reads as attached to its sheet. */}
+      <nav aria-label="Views" className="relative z-(--z-raised) -mb-0.5 flex gap-1 overflow-x-auto">
         {TABS.map((tab) => {
           const current = tab.view === view;
           return (
@@ -54,7 +55,7 @@ export async function ReadingList({
               key={tab.view}
               href={tab.view === "week" ? "/" : `/?view=${tab.view}`}
               aria-current={current ? "page" : undefined}
-              className={`-mb-px shrink-0 border-b-2 px-3 py-3 font-body text-sm whitespace-nowrap no-underline transition-colors duration-(--dur-micro) ${
+              className={`shrink-0 border-b-2 px-3 py-3 font-body text-sm whitespace-nowrap no-underline transition-colors duration-(--dur-micro) ${
                 current ? "border-accent font-medium text-ink" : "border-transparent text-muted hover:text-ink"
               }`}
             >
@@ -64,23 +65,31 @@ export async function ReadingList({
         })}
       </nav>
 
-      <div className="mt-8 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b-2 border-rule-2 pb-3">
-        <h1 id="sheet-heading" className="text-xl sm:text-2xl">
-          {heading}
-        </h1>
-        {count > 0 && (
-          <p className="font-body text-sm text-muted">
-            <span className="num text-ink-2">{count}</span> {count === 1 ? "link" : "links"}
-            {minutes > 0 && (
-              <>
-                , about <span className="num text-ink-2">{minutes}</span> min
-              </>
-            )}
-          </p>
-        )}
-      </div>
+      <div className="border-t-2 border-ink bg-sheet px-4 pt-6 pb-2 sm:px-10 sm:pt-10 sm:pb-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b-2 border-rule-2 pb-3">
+          <h1 id="sheet-heading" className="max-w-none text-xl sm:text-2xl">
+            {heading}
+          </h1>
+          {count > 0 && (
+            <p className="font-body text-sm text-muted">
+              <span className="num text-ink-2">{count}</span> {count === 1 ? "link" : "links"}
+              {minutes > 0 &&
+                (timed === count ? (
+                  <>
+                    , about <span className="num text-ink-2">{minutes}</span> min
+                  </>
+                ) : (
+                  <>
+                    , about <span className="num text-ink-2">{minutes}</span> min for{" "}
+                    <span className="num text-ink-2">{timed}</span> of them
+                  </>
+                ))}
+            </p>
+          )}
+        </div>
 
-      <LinkList links={links} now={now.getTime()} view={view} empty={EMPTY[view]} />
+        <LinkList links={links} now={now.getTime()} view={view} empty={EMPTY[view]} />
+      </div>
     </section>
   );
 }

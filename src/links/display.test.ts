@@ -39,8 +39,9 @@ describe("listSummary", () => {
     expect(listSummary([{ est_minutes: 5 }, { est_minutes: 37 }, { est_minutes: null }])).toEqual({
       count: 3,
       minutes: 42,
+      timed: 2,
     });
-    expect(listSummary([])).toEqual({ count: 0, minutes: 0 });
+    expect(listSummary([])).toEqual({ count: 0, minutes: 0, timed: 0 });
   });
 });
 

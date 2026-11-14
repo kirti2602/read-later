@@ -2,6 +2,7 @@
  * nav: top bar, wordmark left, colour mode and sign out right · signature: the week's sheet, a dated head over numbered ruled rows with minutes in mono · states: loading, empty, error, full, preview pending, undo
  * axes: mid/grotesk-sans/chromatic-magenta · posture: restrained · modes: light+dark · contrast: pass · v2.0.0 */
 /* Hallmark · pre-emit critique: P4 H5 E4 S4 R5 V4 · weakest: S, a reading list could be any list app; the dated weekly sheet with numbered rows and summed minutes makes it this product's Saturday page */
+/* Hallmark · finish-review: subagent · 8 findings · 8 resolved (title underline at rest, thumbnail links, 3-line titles on phones, sheet opens on the dated head, honest minute total, dark hover 6.4:1, login centred, skeleton/error/failed save captured) · gap: none */
 /* Hallmark · dropped {markDone.bind(null, link.id)}, {deleteLink.bind(null, link.id)}, button in get javascript:throw · Done and Delete left their per-row forms for buttons in LinkList so each can be undone in place */
 /* Hallmark · dropped onChange={(e) => setUrl(e.target.value)} · the save field's change handler now also clears a stale message, same field and value */
 /* Hallmark · reworded "Read Later" to "Week of 14 November" · the name moved into the top bar wordmark; the sheet head carries the week */

@@ -39,10 +39,10 @@ export function ModeToggle() {
     <button
       type="button"
       onClick={cycle}
-      aria-label={`Colour mode: ${LABEL[mode]}. Change`}
+      aria-label={`Theme: ${LABEL[mode]}, change theme`}
       className="hit h-8 rounded-pill px-2 font-display text-sm font-medium text-muted transition-colors duration-(--dur-micro) hover:text-ink active:translate-y-px"
     >
-      {LABEL[mode]}
+      Theme: {LABEL[mode]}
     </button>
   );
 }

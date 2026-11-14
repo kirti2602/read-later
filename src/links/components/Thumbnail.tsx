@@ -10,7 +10,7 @@ const TYPE_WORD: Record<LinkType, string> = {
   other: "Link",
 };
 
-const frame = "h-12 w-16 shrink-0 sm:h-14 sm:w-20";
+const frame = "h-9 w-12 shrink-0 sm:h-14 sm:w-20";
 
 /** Preview image, a pulsing plate while it loads, or the type in words when there is none. */
 export function Thumbnail({ src, type, loading = false }: { src: string | null; type: LinkType; loading?: boolean }) {

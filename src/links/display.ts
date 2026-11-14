@@ -29,10 +29,12 @@ export function sourceLine(link: Pick<Link, "type" | "site" | "url">): string {
   }
 }
 
-export function listSummary(links: Pick<Link, "est_minutes">[]): { count: number; minutes: number } {
+/** `timed` is how many links the minute total covers, so the total never passes for the whole list. */
+export function listSummary(links: Pick<Link, "est_minutes">[]): { count: number; minutes: number; timed: number } {
   return {
     count: links.length,
     minutes: links.reduce((sum, link) => sum + (link.est_minutes ?? 0), 0),
+    timed: links.filter((link) => link.est_minutes).length,
   };
 }
 

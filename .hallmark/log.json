@@ -1,0 +1,27 @@
+[
+ {
+  "mode": "redesign",
+  "depth": "full",
+  "scope": "app",
+  "shape": "app screen",
+  "theme": "almanac",
+  "axes": "mid/grotesk-sans/chromatic-magenta",
+  "hero": "none (app screen)",
+  "nav": "top bar: wordmark left, theme toggle and sign out right",
+  "footer": "none",
+  "imagery": "link thumbnails only",
+  "photos": [],
+  "entry": "none",
+  "fingerprint": "sheet-numbered-rows-mono-minutes",
+  "sections": [
+   "save row",
+   "tabs",
+   "dated sheet head",
+   "numbered link rows"
+  ],
+  "signature": "the week's sheet: a dated head over numbered ruled rows with minutes in mono",
+  "waived": [],
+  "prompt": "a personal read-later app: save links from phone and laptop, a weekly Saturday reading list of articles, videos and threads, mark done",
+  "date": "2026-11-14"
+ }
+]
