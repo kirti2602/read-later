@@ -45,9 +45,11 @@ export function VideoPlayer({ link, onClose, onDone }: { link: Link | null; onCl
               className="size-full border-0"
             />
           </div>
-          <div className="flex flex-wrap items-center gap-3 px-5 py-4">
-            <h2 className="m-0 min-w-0 flex-1 text-md leading-snug sm:text-lg">{displayTitle(link)}</h2>
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:gap-6">
+            <h2 className="m-0 line-clamp-2 max-w-none min-w-0 flex-1 text-md leading-snug sm:text-lg" title={displayTitle(link)}>
+              {displayTitle(link)}
+            </h2>
+            <div className="flex shrink-0 items-center gap-2 max-sm:justify-between">
               <a
                 href={link.url}
                 target="_blank"

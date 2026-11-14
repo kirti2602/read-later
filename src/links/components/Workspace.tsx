@@ -105,7 +105,7 @@ export async function Workspace({
               </div>
             </div>
 
-            <LinkGrid links={links} now={now.getTime()} view={view} timeZone={user.timezone} />
+            <LinkGrid links={links} now={now.getTime()} view={view} type={type} timeZone={user.timezone} />
           </section>
         </main>
       </div>

@@ -1,14 +1,17 @@
 "use client";
 
 import { Check, CircleCheck, Coffee, Inbox, LayoutGrid, List, Search, SearchX, Trash2, X, type LucideIcon } from "lucide-react";
+import NextLink from "next/link";
 import { useEffect, useRef, useState, useTransition, type MouseEvent } from "react";
+import { listHref } from "@/shell/nav";
 import { deleteLink, markDone, restoreLink } from "../actions";
-import { displayTitle, isPreviewPending, matchesQuery, youTubeId } from "../display";
+import { displayTitle, isPreviewPending, matchesQuery, youTubeId, type TypeFilter } from "../display";
 import type { View } from "../queries";
 import type { Link } from "../types";
 import { setLayout, setListQuery, useLayout, useListQuery, type Layout } from "../view-state";
 import { LinkCard, type CardProps } from "./LinkCard";
 import { LinkRow } from "./LinkRow";
+import { TYPE_META } from "./type-meta";
 import { VideoPlayer } from "./VideoPlayer";
 
 const UNDO_MS = 8000;
@@ -59,7 +62,19 @@ export function LayoutSwitch() {
  * The list body. Done and Delete apply at once and leave an Undo in the item's place; the server
  * list drops removed items on refresh, so they are held here until the undo window closes.
  */
-export function LinkGrid({ links, now, view, timeZone }: { links: Link[]; now: number; view: View; timeZone: string }) {
+export function LinkGrid({
+  links,
+  now,
+  view,
+  type,
+  timeZone,
+}: {
+  links: Link[];
+  now: number;
+  view: View;
+  type: TypeFilter;
+  timeZone: string;
+}) {
   const layout = useLayout();
   const query = useListQuery();
   const [removals, setRemovals] = useState<Record<string, Removal>>({});
@@ -159,6 +174,26 @@ export function LinkGrid({ links, now, view, timeZone }: { links: Link[]; now: n
         >
           Clear search
         </button>
+      </div>
+    );
+  }
+
+  if (rows.length === 0 && type !== "all") {
+    const { label, Icon } = TYPE_META[type];
+    const where = { week: "this week", older: "in older unread", done: "in done" }[view];
+    return (
+      <div className="flex flex-col items-center rounded-card bg-card px-6 py-12 text-center shadow-(--shadow-card)">
+        <span className="grid size-14 place-items-center rounded-pill bg-paper-2 text-ink-2">
+          <Icon aria-hidden className="size-6" />
+        </span>
+        <p className="mt-4 font-display text-lg font-semibold text-ink">No {label.toLowerCase()}s {where}</p>
+        <p className="mt-1 max-w-sm text-md text-muted">The {label.toLowerCase()} filter is on. Everything else you saved is one tap away.</p>
+        <NextLink
+          href={listHref(view, "all")}
+          className="stock mt-5 inline-flex h-11 items-center rounded-stock bg-paper-2 px-5 font-display text-md font-semibold text-ink no-underline hover:bg-paper-3"
+        >
+          Show everything
+        </NextLink>
       </div>
     );
   }
