@@ -25,7 +25,8 @@ export async function ReadingList({
   if (!user) redirect("/login");
 
   const view = parseView((await searchParams).view);
-  const start = windowStart(new Date(), {
+  const now = new Date();
+  const start = windowStart(now, {
     timeZone: user.timezone,
     digestDay: user.digestDay,
     digestTime: user.digestTime,
@@ -56,7 +57,7 @@ export async function ReadingList({
       ) : (
         <ul>
           {links.map((link) => (
-            <LinkItem key={link.id} link={link} />
+            <LinkItem key={link.id} link={link} now={now.getTime()} />
           ))}
         </ul>
       )}

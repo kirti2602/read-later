@@ -2,9 +2,18 @@
 
 import { useState } from "react";
 
-/** Preview image, or the type icon when there is none or the host refuses to serve it. */
-export function Thumbnail({ src, icon }: { src: string | null; icon: string }) {
+/** Preview image, a pulsing placeholder while it loads, or the type icon when there is none. */
+export function Thumbnail({ src, icon, loading = false }: { src: string | null; icon: string; loading?: boolean }) {
   const [failed, setFailed] = useState(false);
+
+  if (loading) {
+    return (
+      <div
+        className="h-14 w-20 shrink-0 rounded bg-zinc-200 motion-safe:animate-pulse dark:bg-zinc-800"
+        aria-hidden
+      />
+    );
+  }
 
   if (!src || failed) {
     return (
