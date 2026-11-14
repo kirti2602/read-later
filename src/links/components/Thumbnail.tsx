@@ -1,27 +1,29 @@
 "use client";
 
 import { useState } from "react";
+import type { LinkType } from "../types";
 
-/** Preview image, a pulsing placeholder while it loads, or the type icon when there is none. */
-export function Thumbnail({ src, icon, loading = false }: { src: string | null; icon: string; loading?: boolean }) {
+const TYPE_WORD: Record<LinkType, string> = {
+  article: "Article",
+  video: "Video",
+  thread: "Post",
+  other: "Link",
+};
+
+const frame = "h-12 w-16 shrink-0 sm:h-14 sm:w-20";
+
+/** Preview image, a pulsing plate while it loads, or the type in words when there is none. */
+export function Thumbnail({ src, type, loading = false }: { src: string | null; type: LinkType; loading?: boolean }) {
   const [failed, setFailed] = useState(false);
 
   if (loading) {
-    return (
-      <div
-        className="h-14 w-20 shrink-0 rounded bg-zinc-200 motion-safe:animate-pulse dark:bg-zinc-800"
-        aria-hidden
-      />
-    );
+    return <div aria-hidden className={`${frame} bg-paper-2 motion-safe:animate-pulse`} />;
   }
 
   if (!src || failed) {
     return (
-      <div
-        className="flex h-14 w-20 shrink-0 items-center justify-center rounded bg-zinc-100 text-2xl dark:bg-zinc-800"
-        aria-hidden
-      >
-        {icon}
+      <div aria-hidden className={`${frame} flex items-center justify-center bg-paper-2 font-body text-xs text-muted`}>
+        {TYPE_WORD[type]}
       </div>
     );
   }
@@ -37,7 +39,7 @@ export function Thumbnail({ src, icon, loading = false }: { src: string | null; 
       loading="lazy"
       referrerPolicy="no-referrer"
       onError={() => setFailed(true)}
-      className="h-14 w-20 shrink-0 rounded object-cover"
+      className={`${frame} object-cover outline-1 -outline-offset-1 outline-rule`}
     />
   );
 }

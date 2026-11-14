@@ -1,26 +1,44 @@
+/* Hallmark · shape: app screen · genre: editorial · theme: Almanac (deal 1/3, seed personal-read-later-app-save-3c1d·2122b63c·2026-11-14·r0) · redesign: full
+ * nav: top bar, wordmark left, colour mode and sign out right · signature: the week's sheet, a dated head over numbered ruled rows with minutes in mono · states: loading, empty, error, full, preview pending, undo
+ * axes: mid/grotesk-sans/chromatic-magenta · posture: restrained · modes: light+dark · contrast: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H5 E4 S4 R5 V4 · weakest: S, a reading list could be any list app; the dated weekly sheet with numbered rows and summed minutes makes it this product's Saturday page */
+/* Hallmark · dropped {markDone.bind(null, link.id)}, {deleteLink.bind(null, link.id)}, button in get javascript:throw · Done and Delete left their per-row forms for buttons in LinkList so each can be undone in place */
+/* Hallmark · dropped onChange={(e) => setUrl(e.target.value)} · the save field's change handler now also clears a stale message, same field and value */
+/* Hallmark · reworded "Read Later" to "Week of 14 November" · the name moved into the top bar wordmark; the sheet head carries the week */
+/* Hallmark · dropped button · the sign-in button stays; it now declares type="submit" as craft.md asks, so its selector changed */
+/* Hallmark · dismissed 28a · thumbnails are 80px plates beside text rows; the sheet heading is the largest paint, not an image */
 @import "tailwindcss";
+@import "./tokens.css";
+@import "./base.css" layer(base);
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@layer base {
+  body {
+    color: var(--color-ink-2);
+  }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  [data-mode="dark"] body {
+    font-weight: 350;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-mode]) body {
+      font-weight: 350;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@utility num {
+  font-family: var(--font-outlier);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Expands a compact app control to a 44px touch target without changing its look. */
+@utility hit {
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -6px -4px;
+  }
 }

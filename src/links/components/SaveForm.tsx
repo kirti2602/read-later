@@ -1,26 +1,38 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition, type FormEvent } from "react";
+import { useRef, useState, useTransition, type FormEvent } from "react";
 
 const MESSAGES = {
   saved: "Saved ✓",
   restored: "Saved ✓",
-  already_saved: "Already saved this week",
+  already_saved: "Already in this week's list.",
 } as const;
 
 // Most previews land in about a second; a slow one takes up to two 5s attempts (src/links/metadata.ts).
 const PREVIEW_RECHECK_MS = [1500, 4000, 8000, 13000];
 
+type Message = { text: string; isError: boolean };
+
 export function SaveForm() {
   const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState("");
-  const [message, setMessage] = useState<{ text: string; isError: boolean } | null>(null);
+  const [message, setMessage] = useState<Message | null>(null);
   const [pending, startTransition] = useTransition();
+
+  function fail(text: string) {
+    setMessage({ text, isError: true });
+    inputRef.current?.focus();
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage(null);
+    if (url.trim() === "") {
+      fail("Paste a link first.");
+      return;
+    }
     startTransition(async () => {
       try {
         const response = await fetch("/api/links", {
@@ -35,49 +47,63 @@ export function SaveForm() {
         const isJson = response.headers.get("content-type")?.includes("application/json");
         const body = isJson ? await response.json() : null;
         if (!response.ok) {
-          setMessage({ text: body?.error ?? "Something went wrong saving that link.", isError: true });
+          fail(body?.error ?? "Couldn't save that link. Try again.");
           return;
         }
         const text =
           body.result === "already_saved" && body.link.status === "done"
-            ? "Already read this week (in Done)"
+            ? "Already read this week. It's under Done."
             : MESSAGES[body.result as keyof typeof MESSAGES];
         setMessage({ text, isError: false });
         setUrl("");
+        // Keep the field ready for the next link.
+        inputRef.current?.focus();
         router.refresh();
         if (body.previewPending) {
           PREVIEW_RECHECK_MS.forEach((ms) => setTimeout(() => router.refresh(), ms));
         }
       } catch {
-        setMessage({ text: "Network error, try again.", isError: true });
+        fail("Couldn't reach the server. Check your connection and try again.");
       }
     });
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-1">
-      <div className="flex gap-2">
+    <form onSubmit={handleSubmit} noValidate>
+      <label htmlFor="save-url" className="font-body text-sm font-medium text-muted">
+        Save a link
+      </label>
+      <div className="mt-2 flex gap-2">
         <input
-          type="text"
+          ref={inputRef}
+          id="save-url"
+          name="url"
+          type="url"
           inputMode="url"
           autoComplete="off"
-          aria-label="Link to save"
-          placeholder="Paste a link"
+          spellCheck={false}
+          placeholder="https://…"
           value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          required
-          className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-base dark:border-zinc-700"
+          onChange={(e) => {
+            setUrl(e.target.value);
+            if (message) setMessage(null);
+          }}
+          aria-invalid={message?.isError || undefined}
+          aria-describedby="save-url-status"
+          className="h-10 min-w-0 flex-1 rounded-pill border border-muted bg-sheet px-3 font-body text-md text-ink outline-2 -outline-offset-3 outline-transparent transition-colors duration-(--dur-micro) placeholder:text-muted hover:border-ink-2 focus-visible:outline-focus aria-invalid:border-error"
         />
         <button
+          type="submit"
           disabled={pending}
-          className="rounded-md bg-zinc-900 px-4 py-2 font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+          className="h-10 min-w-24 shrink-0 rounded-pill bg-accent px-6 font-display text-sm font-medium text-accent-ink transition-colors duration-(--dur-micro) hover:bg-accent-2 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-55"
         >
           {pending ? "Saving…" : "Save"}
         </button>
       </div>
       <p
+        id="save-url-status"
         aria-live="polite"
-        className={`min-h-5 text-sm ${message?.isError ? "text-red-600 dark:text-red-400" : "text-zinc-600 dark:text-zinc-400"}`}
+        className={`mt-2 min-h-[1lh] font-body text-sm ${message?.isError ? "text-error" : "text-muted"}`}
       >
         {message?.text}
       </p>

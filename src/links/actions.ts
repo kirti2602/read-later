@@ -20,6 +20,19 @@ export async function markDone(linkId: string): Promise<void> {
   refresh();
 }
 
+/** Undo for Done and Delete: puts the link back in the state it was in before. */
+export async function restoreLink(linkId: string, to: "unread" | "done"): Promise<void> {
+  if (!UUID.test(linkId) || (to !== "unread" && to !== "done")) return;
+  const db = await createServerSupabase();
+  const { error } = await db
+    .from("links")
+    .update({ status: to, ...(to === "unread" ? { done_at: null } : {}) })
+    .eq("id", linkId)
+    .neq("status", to);
+  if (error) throw error;
+  refresh();
+}
+
 export async function deleteLink(linkId: string): Promise<void> {
   if (!UUID.test(linkId)) return;
   const db = await createServerSupabase();

@@ -3,15 +3,22 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { getCurrentUser } from "@/auth/current-user";
 import { createServerSupabase } from "@/auth/supabase-server";
+import { formatDay, listSummary } from "../display";
 import { listLinks, parseView, type View } from "../queries";
 import { windowStart } from "../week-window";
-import { LinkItem } from "./LinkItem";
+import { LinkList } from "./LinkList";
 
-const TABS: { view: View; label: string; empty: string }[] = [
-  { view: "week", label: "This week", empty: "Nothing saved this week yet." },
-  { view: "older", label: "Older unread", empty: "No older unread links." },
-  { view: "done", label: "Done", empty: "Nothing marked done yet." },
+const TABS: { view: View; label: string }[] = [
+  { view: "week", label: "This week" },
+  { view: "older", label: "Older unread" },
+  { view: "done", label: "Done" },
 ];
+
+const EMPTY: Record<View, { title: string; body: string }> = {
+  week: { title: "Nothing saved this week yet.", body: "Paste a link above and it starts this week's list." },
+  older: { title: "No older unread links.", body: "Anything you leave unread moves here when a new week starts on Saturday." },
+  done: { title: "Nothing finished yet.", body: "Links you mark done land here." },
+};
 
 export async function ReadingList({
   searchParams,
@@ -32,35 +39,48 @@ export async function ReadingList({
     digestTime: user.digestTime,
   });
   const links = await listLinks(db, user.id, view, start);
-  const current = TABS.find((t) => t.view === view)!;
+  const { count, minutes } = listSummary(links);
+  const weekOf = formatDay(start, user.timezone);
+  const heading =
+    view === "week" ? `Week of ${weekOf}` : view === "older" ? `Saved before ${weekOf}` : "Read and watched";
 
   return (
-    <section className="flex flex-col gap-2">
-      <nav className="flex gap-1 border-b border-zinc-200 dark:border-zinc-800" aria-label="Views">
-        {TABS.map((tab) => (
-          <NextLink
-            key={tab.view}
-            href={tab.view === "week" ? "/" : `/?view=${tab.view}`}
-            aria-current={tab.view === view ? "page" : undefined}
-            className={`-mb-px border-b-2 px-3 py-2 text-sm ${
-              tab.view === view
-                ? "border-zinc-900 font-medium dark:border-zinc-100"
-                : "border-transparent text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            }`}
-          >
-            {tab.label}
-          </NextLink>
-        ))}
+    <section aria-labelledby="sheet-heading" className="mt-4">
+      <nav aria-label="Views" className="-mx-1 flex gap-1 overflow-x-auto border-b border-rule">
+        {TABS.map((tab) => {
+          const current = tab.view === view;
+          return (
+            <NextLink
+              key={tab.view}
+              href={tab.view === "week" ? "/" : `/?view=${tab.view}`}
+              aria-current={current ? "page" : undefined}
+              className={`-mb-px shrink-0 border-b-2 px-3 py-3 font-body text-sm whitespace-nowrap no-underline transition-colors duration-(--dur-micro) ${
+                current ? "border-accent font-medium text-ink" : "border-transparent text-muted hover:text-ink"
+              }`}
+            >
+              {tab.label}
+            </NextLink>
+          );
+        })}
       </nav>
-      {links.length === 0 ? (
-        <p className="py-8 text-center text-zinc-600 dark:text-zinc-400">{current.empty}</p>
-      ) : (
-        <ul>
-          {links.map((link) => (
-            <LinkItem key={link.id} link={link} now={now.getTime()} />
-          ))}
-        </ul>
-      )}
+
+      <div className="mt-8 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b-2 border-rule-2 pb-3">
+        <h1 id="sheet-heading" className="text-xl sm:text-2xl">
+          {heading}
+        </h1>
+        {count > 0 && (
+          <p className="font-body text-sm text-muted">
+            <span className="num text-ink-2">{count}</span> {count === 1 ? "link" : "links"}
+            {minutes > 0 && (
+              <>
+                , about <span className="num text-ink-2">{minutes}</span> min
+              </>
+            )}
+          </p>
+        )}
+      </div>
+
+      <LinkList links={links} now={now.getTime()} view={view} empty={EMPTY[view]} />
     </section>
   );
 }
