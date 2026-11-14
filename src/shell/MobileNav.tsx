@@ -1,4 +1,4 @@
-import { LogOut, Search } from "lucide-react";
+import { LogOut, Search, Settings } from "lucide-react";
 import NextLink from "next/link";
 import { signOut } from "@/app/login/actions";
 import type { TypeFilter } from "@/links/display";
@@ -7,7 +7,7 @@ import { listHref, NAV } from "./nav";
 import { ThemeSwitch } from "./ThemeSwitch";
 
 /** Phone chrome (under 60rem): a slim top bar and a bottom tab bar within thumb reach. */
-export function MobileNav({ view, counts, type }: { view: View; counts: ViewCounts; type: TypeFilter }) {
+export function MobileNav({ view, counts, type }: { view: View | "settings"; counts: ViewCounts; type: TypeFilter }) {
   return (
     <>
       <header className="sticky top-0 z-(--z-sticky-nav) flex h-14 items-center justify-between border-b border-rule bg-paper px-4 lg:hidden">
@@ -24,6 +24,14 @@ export function MobileNav({ view, counts, type }: { view: View; counts: ViewCoun
             <Search aria-hidden className="size-[18px]" />
           </button>
           <ThemeSwitch />
+          <NextLink
+            href="/settings"
+            aria-label="Settings"
+            aria-current={view === "settings" ? "page" : undefined}
+            className="hit grid size-9 place-items-center rounded-control text-muted no-underline transition-colors duration-(--dur-micro) hover:text-ink aria-[current=page]:text-ink"
+          >
+            <Settings aria-hidden className="size-[18px]" />
+          </NextLink>
           <form action={signOut}>
             <button
               type="submit"

@@ -1,4 +1,4 @@
-import { LogOut, Search } from "lucide-react";
+import { LogOut, Search, Settings } from "lucide-react";
 import NextLink from "next/link";
 import { signOut } from "@/app/login/actions";
 import type { TypeFilter } from "@/links/display";
@@ -10,8 +10,8 @@ import { ThemeSwitch } from "./ThemeSwitch";
 const quietButton =
   "hit flex h-9 items-center gap-2 rounded-control px-2 font-display text-sm font-medium text-muted transition-colors duration-(--dur-micro) hover:bg-paper-3 hover:text-ink";
 
-/** Desktop navigation (60rem and up); phones get MobileNav instead. */
-export function Sidebar({ view, counts, type }: { view: View; counts: ViewCounts; type: TypeFilter }) {
+/** Desktop navigation (60rem and up); phones get MobileNav instead. `view` is the current page. */
+export function Sidebar({ view, counts, type }: { view: View | "settings"; counts: ViewCounts; type: TypeFilter }) {
   return (
     <aside className="sticky top-0 hidden h-dvh flex-col gap-6 border-r border-rule bg-paper-2 px-4 pt-7 pb-5 lg:flex">
       <NextLink href="/" aria-label="Read Later, home" className="px-2 font-display text-xl font-semibold tracking-(--tracking-display) text-ink no-underline">
@@ -51,6 +51,16 @@ export function Sidebar({ view, counts, type }: { view: View; counts: ViewCounts
       </nav>
 
       <div className="mt-auto flex flex-col gap-3">
+        <NextLink
+          href="/settings"
+          aria-current={view === "settings" ? "page" : undefined}
+          className={`flex h-10 items-center gap-3 rounded-control px-3 font-display text-sm font-medium no-underline transition-colors duration-(--dur-micro) ${
+            view === "settings" ? "bg-ink text-paper" : "text-ink-2 hover:bg-paper-3"
+          }`}
+        >
+          <Settings aria-hidden className="size-4 shrink-0" />
+          Settings
+        </NextLink>
         <ThemeSwitch />
         <div className="flex items-center justify-between">
           <form action={signOut}>
