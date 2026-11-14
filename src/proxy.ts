@@ -24,12 +24,19 @@ export async function proxy(request: NextRequest) {
 
   // API routes answer 401 themselves instead of redirecting.
   if (!signedIn && pathname !== "/login" && !pathname.startsWith("/api/")) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return redirectKeepingCookies("/login", request, response);
   }
   if (signedIn && pathname === "/login") {
-    return NextResponse.redirect(new URL("/", request.url));
+    return redirectKeepingCookies("/", request, response);
   }
   return response;
+}
+
+/** A refreshed session lives only in `response`'s cookies; dropping them would log the user out. */
+function redirectKeepingCookies(path: string, request: NextRequest, response: NextResponse) {
+  const redirect = NextResponse.redirect(new URL(path, request.url));
+  response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+  return redirect;
 }
 
 export const config = {

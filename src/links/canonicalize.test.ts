@@ -25,6 +25,19 @@ describe("canonicalizeUrl", () => {
     },
   );
 
+  it("treats host:port without a scheme as a web link", () => {
+    expect(canonicalizeUrl("example.com:8080/x").url).toBe("https://example.com:8080/x");
+  });
+
+  it("rejects URLs longer than 2048 characters", () => {
+    expect(() => canonicalizeUrl(`https://example.com/${"a".repeat(2048)}`)).toThrow(InvalidUrlError);
+  });
+
+  it("keeps hash routes so different app pages stay different", () => {
+    expect(canon("https://app.example.com/#/post/1")).toBe("https://app.example.com/#/post/1");
+    expect(canon("https://app.example.com/#!/post/2")).toBe("https://app.example.com/#!/post/2");
+  });
+
   it("lowercases the host and strips www. and m.", () => {
     expect(canon("https://WWW.Example.com/Path")).toBe("https://example.com/Path");
     expect(canon("https://m.example.com/a")).toBe("https://example.com/a");

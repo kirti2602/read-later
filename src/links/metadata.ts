@@ -90,6 +90,8 @@ async function readTextLimited(response: Response, maxBytes: number): Promise<st
   return new TextDecoder().decode(Buffer.concat(chunks).subarray(0, maxBytes));
 }
 
+// yagni: no private-IP filtering; only the signed-in owner can submit URLs (sign-ups are off).
+// Before opening saving to anyone else, resolve DNS and block private ranges on every redirect hop.
 async function fetchHtml(url: string, fetchImpl: typeof fetch): Promise<string | null> {
   const response = await fetchImpl(url, {
     headers: { "user-agent": USER_AGENT, accept: "text/html" },

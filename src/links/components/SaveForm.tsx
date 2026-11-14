@@ -24,12 +24,21 @@ export function SaveForm() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ url }),
         });
-        const body = await response.json();
-        if (!response.ok) {
-          setMessage({ text: body.error ?? "Could not save that link.", isError: true });
+        if (response.status === 401) {
+          router.push("/login");
           return;
         }
-        setMessage({ text: MESSAGES[body.result as keyof typeof MESSAGES], isError: false });
+        const isJson = response.headers.get("content-type")?.includes("application/json");
+        const body = isJson ? await response.json() : null;
+        if (!response.ok) {
+          setMessage({ text: body?.error ?? "Something went wrong saving that link.", isError: true });
+          return;
+        }
+        const text =
+          body.result === "already_saved" && body.link.status === "done"
+            ? "Already read this week (in Done)"
+            : MESSAGES[body.result as keyof typeof MESSAGES];
+        setMessage({ text, isError: false });
         setUrl("");
         router.refresh();
       } catch {

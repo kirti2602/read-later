@@ -5,7 +5,9 @@ export class InvalidUrlError extends Error {
   }
 }
 
-const TRACKING_PARAMS = new Set(["fbclid", "gclid", "igshid", "si", "ref_src"]);
+// Also keeps the unique index on canonical_url under Postgres's btree row limit.
+const MAX_URL_LENGTH = 2048;
+const TRACKING_PARAMS =new Set(["fbclid", "gclid", "igshid", "si", "ref_src"]);
 const X_SHARE_PARAMS = new Set(["s", "t"]);
 
 /**
@@ -15,7 +17,10 @@ const X_SHARE_PARAMS = new Set(["s", "t"]);
  */
 export function canonicalizeUrl(input: string): { url: string; canonicalUrl: string } {
   const trimmed = input.trim();
-  const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  if (trimmed.length > MAX_URL_LENGTH) throw new InvalidUrlError(input);
+  // A colon followed by a digit is a port ("example.com:8080"), not a scheme.
+  const hasScheme = /^[a-z][a-z0-9+.-]*:(?!\d)/i.test(trimmed);
+  const withScheme = hasScheme ? trimmed : `https://${trimmed}`;
 
   let parsed: URL;
   try {
@@ -30,7 +35,8 @@ export function canonicalizeUrl(input: string): { url: string; canonicalUrl: str
   const url = parsed.href;
   const c = new URL(parsed.href);
   c.protocol = "https:";
-  c.hash = "";
+  // "#/post/1" and "#!/post/1" are routes in single-page apps, not in-page anchors.
+  if (!/^#!?\//.test(c.hash)) c.hash = "";
   c.hostname = c.hostname.replace(/^(www|m|mobile)\./, "");
 
   if (c.hostname === "twitter.com") c.hostname = "x.com";

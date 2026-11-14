@@ -56,16 +56,26 @@ export function LinkItem({ link }: { link: Link }) {
           {meta}
         </p>
         <div className="flex gap-2">
-          <a href={link.url} target="_blank" rel="noopener noreferrer" className={buttonClass}>
+          <a
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Open ${title}`}
+            className={buttonClass}
+          >
             Open
           </a>
           {link.status === "unread" && (
             <form action={markDone.bind(null, link.id)}>
-              <button className={buttonClass}>Done</button>
+              <button aria-label={`Mark done: ${title}`} className={buttonClass}>
+                Done
+              </button>
             </form>
           )}
           <form action={deleteLink.bind(null, link.id)}>
-            <button className={buttonClass}>Delete</button>
+            <button aria-label={`Delete ${title}`} className={buttonClass}>
+              Delete
+            </button>
           </form>
         </div>
       </div>

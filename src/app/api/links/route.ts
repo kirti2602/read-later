@@ -23,7 +23,10 @@ export async function POST(request: Request) {
   try {
     const { link, result } = await saveLink(db, user, rawUrl, "web");
     if (result === "saved") {
-      const preview = enrichLink(db, link);
+      // The link is already saved; a preview failure must not turn this into an error.
+      const preview = enrichLink(db, link).catch((error) =>
+        console.error("Link preview failed", link.id, error),
+      );
       after(() => preview);
       await Promise.race([preview, new Promise((resolve) => setTimeout(resolve, PREVIEW_WAIT_MS))]);
     }
