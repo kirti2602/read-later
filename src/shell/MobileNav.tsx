@@ -1,4 +1,4 @@
-import { LogOut } from "lucide-react";
+import { LogOut, Search } from "lucide-react";
 import NextLink from "next/link";
 import { signOut } from "@/app/login/actions";
 import type { TypeFilter } from "@/links/display";
@@ -14,7 +14,15 @@ export function MobileNav({ view, counts, type }: { view: View; counts: ViewCoun
         <NextLink href="/" aria-label="Read Later, home" className="font-display text-lg font-semibold tracking-(--tracking-display) text-ink no-underline">
           Read Later
         </NextLink>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            data-palette-open
+            aria-label="Search"
+            className="hit grid size-9 place-items-center rounded-control text-muted transition-colors duration-(--dur-micro) hover:text-ink"
+          >
+            <Search aria-hidden className="size-[18px]" />
+          </button>
           <ThemeSwitch />
           <form action={signOut}>
             <button

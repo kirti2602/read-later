@@ -84,3 +84,18 @@ export function savedDay(savedAt: string, now: number, timeZone: string): string
 export function faviconUrl(url: string): string {
   return `${new URL(url).origin}/favicon.ico`;
 }
+
+/**
+ * A PostgREST ilike pattern for a search box, or null when too short. Commas, parentheses and quotes
+ * would break the `or=(…)` filter syntax and `*`/`%` are wildcards, so they are dropped, not escaped.
+ */
+export function searchPattern(query: string): string | null {
+  const cleaned = query.replace(/[,()"*%\\]/g, "").trim();
+  return cleaned.length >= 2 ? `*${cleaned}*` : null;
+}
+
+/** Client-side list filter: every word must appear in the title, site or URL. */
+export function matchesQuery(link: Pick<Link, "title" | "site" | "url">, query: string): boolean {
+  const haystack = `${link.title ?? ""} ${link.site ?? ""} ${link.url}`.toLowerCase();
+  return query.toLowerCase().split(/\s+/).filter(Boolean).every((word) => haystack.includes(word));
+}

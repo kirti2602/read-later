@@ -4,14 +4,14 @@ import { connection } from "next/server";
 import { getCurrentUser } from "@/auth/current-user";
 import { createServerSupabase } from "@/auth/supabase-server";
 import { listHref } from "@/shell/nav";
+import { CommandPalette } from "@/shell/CommandPalette";
 import { MobileNav } from "@/shell/MobileNav";
-import { Shortcuts } from "@/shell/Shortcuts";
 import { Sidebar } from "@/shell/Sidebar";
 import { TitleCount } from "@/shell/TitleCount";
 import { formatDay, listSummary, parseType, type TypeFilter } from "../display";
 import { countLinks, listLinks, parseView } from "../queries";
 import { windowStart } from "../week-window";
-import { LayoutSwitch, LinkGrid } from "./LinkGrid";
+import { LayoutSwitch, LinkGrid, ListSearch } from "./LinkGrid";
 import { SaveForm } from "./SaveForm";
 import { TYPE_META } from "./type-meta";
 
@@ -99,14 +99,17 @@ export async function Workspace({
                   );
                 })}
               </nav>
-              <LayoutSwitch />
+              <div className="flex w-full items-center gap-2 sm:w-auto">
+                <ListSearch />
+                <LayoutSwitch />
+              </div>
             </div>
 
             <LinkGrid links={links} now={now.getTime()} view={view} timeZone={user.timezone} />
           </section>
         </main>
       </div>
-      <Shortcuts type={type} />
+      <CommandPalette type={type} />
       <TitleCount count={counts.week} />
     </>
   );

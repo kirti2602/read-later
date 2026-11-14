@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { displayTitle, faviconUrl, formatDay, isPreviewPending, listSummary, parseType, savedDay, sourceLine, youTubeId } from "./display";
+import { displayTitle, faviconUrl, formatDay, isPreviewPending, listSummary, matchesQuery, parseType, savedDay, searchPattern, sourceLine, youTubeId } from "./display";
 
 const savedAt = "2026-11-14T10:00:00.000Z";
 const at = (seconds: number) => Date.parse(savedAt) + seconds * 1000;
@@ -94,5 +94,27 @@ describe("faviconUrl", () => {
   it("asks the site itself for its icon", () => {
     expect(faviconUrl("https://www.techpowerup.com/news/123")).toBe("https://www.techpowerup.com/favicon.ico");
     expect(faviconUrl("http://example.com:8080/a")).toBe("http://example.com:8080/favicon.ico");
+  });
+});
+
+describe("searchPattern", () => {
+  it("turns a query into a safe PostgREST ilike pattern", () => {
+    expect(searchPattern("  claude code ")).toBe("*claude code*");
+    expect(searchPattern("a,b(c)*%\"")).toBe("*abc*");
+  });
+
+  it("ignores queries shorter than two characters", () => {
+    expect(searchPattern("a")).toBeNull();
+    expect(searchPattern("  ")).toBeNull();
+  });
+});
+
+describe("matchesQuery", () => {
+  const link = { title: "NVIDIA Allegedly Engineered Scarcity", site: "TechPowerUp", url: "https://www.techpowerup.com/news/1" };
+  it("matches title, site or url, case-insensitively, every word", () => {
+    expect(matchesQuery(link, "nvidia")).toBe(true);
+    expect(matchesQuery(link, "techpower scarcity")).toBe(true);
+    expect(matchesQuery(link, "nvidia apple")).toBe(false);
+    expect(matchesQuery(link, "")).toBe(true);
   });
 });

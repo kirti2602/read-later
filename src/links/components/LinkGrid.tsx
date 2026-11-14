@@ -1,20 +1,20 @@
 "use client";
 
-import { Check, CircleCheck, Coffee, Inbox, LayoutGrid, List, Trash2, type LucideIcon } from "lucide-react";
-import { useEffect, useRef, useState, useSyncExternalStore, useTransition, type MouseEvent } from "react";
+import { Check, CircleCheck, Coffee, Inbox, LayoutGrid, List, Search, SearchX, Trash2, X, type LucideIcon } from "lucide-react";
+import { useEffect, useRef, useState, useTransition, type MouseEvent } from "react";
 import { deleteLink, markDone, restoreLink } from "../actions";
-import { displayTitle, isPreviewPending, youTubeId } from "../display";
+import { displayTitle, isPreviewPending, matchesQuery, youTubeId } from "../display";
 import type { View } from "../queries";
 import type { Link } from "../types";
+import { setLayout, setListQuery, useLayout, useListQuery, type Layout } from "../view-state";
 import { LinkCard, type CardProps } from "./LinkCard";
 import { LinkRow } from "./LinkRow";
 import { VideoPlayer } from "./VideoPlayer";
 
 const UNDO_MS = 8000;
-const LAYOUT_KEY = "layout";
-const LAYOUT_EVENT = "layoutchange";
+/** Other components (the search palette) ask the grid to play a video with this window event. */
+export const PLAY_EVENT = "readlater:play";
 
-type Layout = "cards" | "list";
 type Action = "done" | "deleted";
 type Removal = { link: Link; index: number; action: Action; phase: "undoable" | "restoring" };
 
@@ -27,29 +27,9 @@ const EMPTY: Record<View, { title: string; body: string; Icon: LucideIcon }> = {
 const without = <T,>(record: Record<string, T>, key: string) =>
   Object.fromEntries(Object.entries(record).filter(([k]) => k !== key));
 
-function readLayout(): Layout {
-  try {
-    return localStorage.getItem(LAYOUT_KEY) === "list" ? "list" : "cards";
-  } catch {
-    return "cards";
-  }
-}
-function subscribeLayout(onChange: () => void) {
-  window.addEventListener(LAYOUT_EVENT, onChange);
-  return () => window.removeEventListener(LAYOUT_EVENT, onChange);
-}
-function setLayout(layout: Layout) {
-  try {
-    localStorage.setItem(LAYOUT_KEY, layout);
-  } catch {
-    // Storage can be blocked; the layout still switches for this visit.
-  }
-  window.dispatchEvent(new Event(LAYOUT_EVENT));
-}
-
 /** Cards or a list switch, remembered per browser. */
 export function LayoutSwitch() {
-  const layout = useSyncExternalStore(subscribeLayout, readLayout, () => "cards" as Layout);
+  const layout = useLayout();
   const options: { value: Layout; label: string; Icon: LucideIcon }[] = [
     { value: "cards", label: "Cards", Icon: LayoutGrid },
     { value: "list", label: "List", Icon: List },
@@ -80,7 +60,8 @@ export function LayoutSwitch() {
  * list drops removed items on refresh, so they are held here until the undo window closes.
  */
 export function LinkGrid({ links, now, view, timeZone }: { links: Link[]; now: number; view: View; timeZone: string }) {
-  const layout = useSyncExternalStore(subscribeLayout, readLayout, () => "cards" as Layout);
+  const layout = useLayout();
+  const query = useListQuery();
   const [removals, setRemovals] = useState<Record<string, Removal>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [openedId, setOpenedId] = useState<string | null>(null);
@@ -99,11 +80,19 @@ export function LinkGrid({ links, now, view, timeZone }: { links: Link[]; now: n
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [openedId]);
 
+  useEffect(() => {
+    const onPlay = (event: Event) => setPlaying((event as CustomEvent<Link>).detail);
+    window.addEventListener(PLAY_EVENT, onPlay);
+    return () => window.removeEventListener(PLAY_EVENT, onPlay);
+  }, []);
+
   const rows: { link: Link; removal?: Removal }[] = links.map((link) => ({ link, removal: removals[link.id] }));
   for (const removal of Object.values(removals)) {
     if (links.some((l) => l.id === removal.link.id)) continue;
     rows.splice(Math.min(removal.index, rows.length), 0, { link: removal.link, removal });
   }
+
+  const visible = query ? rows.filter(({ link, removal }) => removal || matchesQuery(link, query)) : rows;
 
   function fail(id: string) {
     setErrors((e) => ({ ...e, [id]: "Couldn't update this link. Try again." }));
@@ -153,6 +142,25 @@ export function LinkGrid({ links, now, view, timeZone }: { links: Link[]; now: n
       return;
     }
     if (link.status === "unread") setOpenedId(link.id);
+  }
+
+  if (rows.length > 0 && visible.length === 0) {
+    return (
+      <div className="flex flex-col items-center rounded-card bg-card px-6 py-12 text-center shadow-(--shadow-card)">
+        <span className="grid size-14 place-items-center rounded-pill bg-paper-2 text-ink-2">
+          <SearchX aria-hidden className="size-6" />
+        </span>
+        <p className="mt-4 font-display text-lg font-semibold text-ink">Nothing here matches “{query}”</p>
+        <p className="mt-1 max-w-sm text-md text-muted">This only searches this list. Press ⌘K to search every link you have saved.</p>
+        <button
+          type="button"
+          onClick={() => setListQuery("")}
+          className="stock mt-5 h-11 rounded-stock bg-paper-2 px-5 font-display text-md font-semibold text-ink hover:bg-paper-3"
+        >
+          Clear search
+        </button>
+      </div>
+    );
   }
 
   if (rows.length === 0) {
@@ -205,7 +213,7 @@ export function LinkGrid({ links, now, view, timeZone }: { links: Link[]; now: n
           layout === "list" ? "flex flex-col gap-3" : "grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
         }`}
       >
-        {rows.map(({ link, removal }, index) =>
+        {visible.map(({ link, removal }, index) =>
           removal?.phase === "undoable" ? (
             <li
               key={link.id}
@@ -245,11 +253,49 @@ export function LinkGrid({ links, now, view, timeZone }: { links: Link[]; now: n
           playing?.status === "unread"
             ? () => {
                 const index = rows.findIndex((r) => r.link.id === playing.id);
-                remove(playing, Math.max(index, 0), "done");
+                if (index >= 0) remove(playing, index, "done");
+                // A video opened from search may live in another view; mark it done without an undo tile.
+                else startTransition(() => markDone(playing.id));
               }
             : undefined
         }
       />
     </>
+  );
+}
+
+/** Filters the current list as you type; ⌘K searches everything instead. */
+export function ListSearch() {
+  const query = useListQuery();
+  return (
+    <div className="relative w-full sm:w-64">
+      <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
+      <input
+        id="list-search"
+        type="search"
+        value={query}
+        onChange={(e) => setListQuery(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            setListQuery("");
+            e.currentTarget.blur();
+          }
+        }}
+        placeholder="Search this list"
+        aria-label="Search this list"
+        autoComplete="off"
+        className="h-9 w-full rounded-pill border border-muted bg-card pr-9 pl-9 text-sm text-ink outline-2 -outline-offset-3 outline-transparent transition-colors duration-(--dur-micro) placeholder:text-muted hover:border-ink-2 focus-visible:outline-focus [&::-webkit-search-cancel-button]:hidden"
+      />
+      {query && (
+        <button
+          type="button"
+          aria-label="Clear search"
+          onClick={() => setListQuery("")}
+          className="hit absolute top-1/2 right-1.5 grid size-7 -translate-y-1/2 place-items-center rounded-pill text-muted hover:bg-paper-2 hover:text-ink"
+        >
+          <X aria-hidden className="size-3.5" />
+        </button>
+      )}
+    </div>
   );
 }

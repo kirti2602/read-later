@@ -22,7 +22,7 @@ function subscribe(onChange: () => void) {
   return () => window.removeEventListener(MODE_EVENT, onChange);
 }
 
-function applyMode(mode: Mode) {
+export function applyMode(mode: Mode) {
   try {
     if (mode === "auto") localStorage.removeItem("mode");
     else localStorage.setItem("mode", mode);

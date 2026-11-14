@@ -1,4 +1,4 @@
-import { Keyboard, LogOut } from "lucide-react";
+import { LogOut, Search } from "lucide-react";
 import NextLink from "next/link";
 import { signOut } from "@/app/login/actions";
 import type { TypeFilter } from "@/links/display";
@@ -19,6 +19,16 @@ export function Sidebar({ view, counts, type }: { view: View; counts: ViewCounts
       </NextLink>
 
       <FocusSaveButton />
+
+      <button
+        type="button"
+        data-palette-open
+        className="flex h-10 items-center gap-2 rounded-control bg-paper px-3 text-sm text-muted shadow-[inset_0_0_0_1px_var(--color-rule)] transition-colors duration-(--dur-micro) hover:text-ink"
+      >
+        <Search aria-hidden className="size-4" />
+        <span className="flex-1 text-left">Search</span>
+        <kbd className="rounded-[6px] bg-paper-2 px-1.5 py-0.5 font-display text-xs font-semibold">⌘K</kbd>
+      </button>
 
       <nav aria-label="Views" className="flex flex-col gap-1">
         {NAV.map(({ view: item, label, Icon }) => {
@@ -49,9 +59,6 @@ export function Sidebar({ view, counts, type }: { view: View; counts: ViewCounts
               Sign out
             </button>
           </form>
-          <button type="button" data-shortcuts-open className={quietButton} aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">
-            <Keyboard aria-hidden className="size-4" />
-          </button>
         </div>
       </div>
     </aside>
