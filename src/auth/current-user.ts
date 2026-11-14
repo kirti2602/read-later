@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { isAuthRetryableFetchError, type SupabaseClient } from "@supabase/supabase-js";
 
 export type AppUser = {
   id: string;
@@ -8,9 +8,13 @@ export type AppUser = {
   digestTime: string;
 };
 
-/** The signed-in user's profile row, or null when there is no valid session. */
+/**
+ * The signed-in user's profile row, or null when there is no valid session.
+ * Throws when Supabase can't be reached: "couldn't check" must not look like "signed out".
+ */
 export async function getCurrentUser(db: SupabaseClient): Promise<AppUser | null> {
-  const { data: claims } = await db.auth.getClaims();
+  const { data: claims, error: claimsError } = await db.auth.getClaims();
+  if (claimsError && isAuthRetryableFetchError(claimsError)) throw claimsError;
   const userId = claims?.claims.sub;
   if (!userId) return null;
 

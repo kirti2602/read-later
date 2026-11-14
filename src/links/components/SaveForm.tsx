@@ -9,8 +9,8 @@ const MESSAGES = {
   already_saved: "Already saved this week",
 } as const;
 
-// A slow preview takes up to two 5s fetch attempts (src/links/metadata.ts).
-const PREVIEW_RECHECK_MS = [3000, 7000, 12000];
+// Most previews land in about a second; a slow one takes up to two 5s attempts (src/links/metadata.ts).
+const PREVIEW_RECHECK_MS = [1500, 4000, 8000, 13000];
 
 export function SaveForm() {
   const router = useRouter();
@@ -20,6 +20,7 @@ export function SaveForm() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setMessage(null);
     startTransition(async () => {
       try {
         const response = await fetch("/api/links", {
