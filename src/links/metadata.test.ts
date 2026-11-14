@@ -95,6 +95,21 @@ describe("fetchMetadata", () => {
     expect(meta.title!.startsWith("long long")).toBe(true);
   });
 
+  it("drops t.co and pic links from X text, falling back to the author", async () => {
+    const xMeta = (p: string) =>
+      fetchMetadata(
+        { url: "https://x.com/someone/status/1", canonicalUrl: "https://x.com/someone/status/1" },
+        stubFetch({
+          "https://publish.x.com/oembed": () =>
+            Response.json({ author_name: "Addy Osmani", html: `<blockquote>${p}&mdash; Addy</blockquote>` }),
+        }),
+      );
+    expect((await xMeta(`<p lang="zxx"><a href="https://t.co/4Hfk0dYIBI">https://t.co/4Hfk0dYIBI</a></p>`)).title).toBe(
+      "Post by Addy Osmani",
+    );
+    expect((await xMeta(`<p lang="en">Read this https://t.co/abc pic.x.com/xyz</p>`)).title).toBe("Read this");
+  });
+
   it("fetches ordinary pages at the original URL, not the canonical one", async () => {
     const fetchImpl = stubFetch({
       "http://www.old.example/a": () => htmlResponse(html(`<title>Old site</title>`)),

@@ -132,7 +132,14 @@ async function youTubeMetadata(url: string, fetchImpl: typeof fetch): Promise<Li
 async function xPostMetadata(url: string, fetchImpl: typeof fetch): Promise<LinkMetadata> {
   const oembedUrl = `https://publish.x.com/oembed?omit_script=1&url=${encodeURIComponent(url)}`;
   const oembed = await fetchJson<{ author_name?: string; html?: string }>(oembedUrl, fetchImpl);
-  const text = oembed.html ? parse(oembed.html).querySelector("p")?.text.trim() : undefined;
+  // Media and article posts carry only shortened links as text; those make useless titles.
+  const text = oembed.html
+    ? parse(oembed.html)
+        .querySelector("p")
+        ?.text.replace(/(https?:\/\/t\.co\/\S+|pic\.(twitter|x)\.com\/\S+)/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+    : undefined;
   const title = text
     ? text.length > MAX_TITLE_CHARS
       ? `${text.slice(0, MAX_TITLE_CHARS - 1)}…`

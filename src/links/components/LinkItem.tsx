@@ -1,5 +1,6 @@
 import { deleteLink, markDone } from "../actions";
 import type { Link, LinkType } from "../types";
+import { Thumbnail } from "./Thumbnail";
 
 const TYPE_ICONS: Record<LinkType, { icon: string; label: string }> = {
   article: { icon: "📄", label: "Article" },
@@ -23,23 +24,7 @@ export function LinkItem({ link }: { link: Link }) {
 
   return (
     <li className="flex gap-3 border-b border-zinc-200 py-3 dark:border-zinc-800">
-      {link.thumbnail_url ? (
-        // Thumbnails come from arbitrary hosts, so next/image's allow-list doesn't fit.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={link.thumbnail_url}
-          alt=""
-          width={80}
-          height={56}
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          className="h-14 w-20 shrink-0 rounded object-cover"
-        />
-      ) : (
-        <div className="flex h-14 w-20 shrink-0 items-center justify-center rounded bg-zinc-100 text-2xl dark:bg-zinc-800" aria-hidden>
-          {icon}
-        </div>
-      )}
+      <Thumbnail src={link.thumbnail_url} icon={icon} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <a
           href={link.url}
