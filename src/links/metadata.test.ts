@@ -95,6 +95,31 @@ describe("fetchMetadata", () => {
     expect(meta.title!.startsWith("long long")).toBe(true);
   });
 
+  it("takes the X picture and title from the page served to link-preview bots", async () => {
+    let pageUserAgent: string | null = null;
+    const fetchImpl: typeof fetch = async (input, init) => {
+      const url = String(input);
+      if (url.startsWith("https://publish.x.com/oembed")) {
+        return Response.json({ author_name: "Addy Osmani", html: `<blockquote><p lang="zxx"><a href="https://t.co/a">https://t.co/a</a></p></blockquote>` });
+      }
+      pageUserAgent = new Headers(init?.headers).get("user-agent");
+      return htmlResponse(
+        html(
+          `<meta property="og:title" content="Addy Osmani on X: &quot;How the Claude Code team does code review&quot; / X">` +
+            `<meta property="og:image" content="https://pbs.twimg.com/media/HV?format=webp&amp;name=large">`,
+        ),
+      );
+    };
+    const meta = await fetchMetadata(
+      { url: "https://x.com/addyosmani/status/1", canonicalUrl: "https://x.com/addyosmani/status/1" },
+      fetchImpl,
+    );
+    expect(pageUserAgent).toMatch(/Slackbot/);
+    expect(meta.title).toBe("How the Claude Code team does code review");
+    expect(meta.thumbnailUrl).toBe("https://pbs.twimg.com/media/HV?format=webp&name=large");
+    expect(meta.type).toBe("thread");
+  });
+
   it("drops t.co and pic links from X text, falling back to the author", async () => {
     const xMeta = (p: string) =>
       fetchMetadata(

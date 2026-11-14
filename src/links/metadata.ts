@@ -16,6 +16,7 @@ const MAX_TITLE_CHARS = 120;
 // One retry absorbs dropped connections and timeouts, which are usually transient.
 const MAX_ATTEMPTS = 2;
 const USER_AGENT = "Mozilla/5.0 (compatible; ReadLater/1.0)";
+const X_PREVIEW_USER_AGENT = "Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)";
 
 const hostnameOf = (url: string) => new URL(url).hostname.replace(/^www\./, "");
 
@@ -94,9 +95,13 @@ async function readTextLimited(response: Response, maxBytes: number): Promise<st
 
 // yagni: no private-IP filtering; only the signed-in owner can submit URLs (sign-ups are off).
 // Before opening saving to anyone else, resolve DNS and block private ranges on every redirect hop.
-async function fetchHtml(url: string, fetchImpl: typeof fetch): Promise<string | null> {
+async function fetchHtml(
+  url: string,
+  fetchImpl: typeof fetch,
+  userAgent: string = USER_AGENT,
+): Promise<string | null> {
   const response = await fetchImpl(url, {
-    headers: { "user-agent": USER_AGENT, accept: "text/html" },
+    headers: { "user-agent": userAgent, accept: "text/html" },
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!response.ok || !response.headers.get("content-type")?.includes("text/html")) {
@@ -129,25 +134,35 @@ async function youTubeMetadata(url: string, fetchImpl: typeof fetch): Promise<Li
   };
 }
 
+// Media and article posts carry only shortened links as text; those make useless titles.
+const withoutShortLinks = (text: string) =>
+  text.replace(/(https?:\/\/t\.co\/\S+|pic\.(twitter|x)\.com\/\S+)/g, "").replace(/\s+/g, " ").trim();
+
+const truncate = (text: string) =>
+  text.length > MAX_TITLE_CHARS ? `${text.slice(0, MAX_TITLE_CHARS - 1)}…` : text;
+
 async function xPostMetadata(url: string, fetchImpl: typeof fetch): Promise<LinkMetadata> {
   const oembedUrl = `https://publish.x.com/oembed?omit_script=1&url=${encodeURIComponent(url)}`;
-  const oembed = await fetchJson<{ author_name?: string; html?: string }>(oembedUrl, fetchImpl);
-  // Media and article posts carry only shortened links as text; those make useless titles.
-  const text = oembed.html
-    ? parse(oembed.html)
-        .querySelector("p")
-        ?.text.replace(/(https?:\/\/t\.co\/\S+|pic\.(twitter|x)\.com\/\S+)/g, "")
-        .replace(/\s+/g, " ")
-        .trim()
-    : undefined;
-  const title = text
-    ? text.length > MAX_TITLE_CHARS
-      ? `${text.slice(0, MAX_TITLE_CHARS - 1)}…`
-      : text
-    : oembed.author_name
-      ? `Post by ${oembed.author_name}`
-      : null;
-  return { title, site: "X", thumbnailUrl: null, type: "thread", estMinutes: null };
+  const [oembed, botPage] = await Promise.all([
+    fetchJson<{ author_name?: string; html?: string }>(oembedUrl, fetchImpl),
+    // x.com serves og:title/og:image only to known link-preview bots; everyone else gets a JS shell.
+    // Deliberate workaround, chosen by the owner: X may stop it anytime, and oEmbed stays the fallback.
+    fetchHtml(url, fetchImpl, X_PREVIEW_USER_AGENT).catch(() => null),
+  ]);
+
+  const page = botPage ? parseHtml(botPage, url) : null;
+  // og:title reads `Name on X: "post text" / X`.
+  const pageText = page?.title?.match(/^.+? on X: "([\s\S]*)" \/ X$/)?.[1];
+  const oembedText = oembed.html ? parse(oembed.html).querySelector("p")?.text : undefined;
+  const text = [pageText, oembedText].map((t) => (t ? withoutShortLinks(t) : "")).find(Boolean);
+
+  return {
+    title: text ? truncate(text) : oembed.author_name ? `Post by ${oembed.author_name}` : null,
+    site: "X",
+    thumbnailUrl: page?.thumbnailUrl ?? null,
+    type: "thread",
+    estMinutes: null,
+  };
 }
 
 /**
