@@ -1,5 +1,6 @@
 import NextLink from "next/link";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { getCurrentUser } from "@/auth/current-user";
 import { createServerSupabase } from "@/auth/supabase-server";
 import { listLinks, parseView, type View } from "../queries";
@@ -17,6 +18,8 @@ export async function ReadingList({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  // Session expiry checks and the week window read the clock; that must happen per request.
+  await connection();
   const db = await createServerSupabase();
   const user = await getCurrentUser(db);
   if (!user) redirect("/login");
