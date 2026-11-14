@@ -106,6 +106,21 @@ describe("fetchMetadata", () => {
     expect(meta.title).toBe("Old site");
   });
 
+  it("retries once when the first fetch fails on the network", async () => {
+    let calls = 0;
+    const fetchImpl: typeof fetch = async () => {
+      calls += 1;
+      if (calls === 1) throw new TypeError("fetch failed");
+      return htmlResponse(html(`<title>Second try</title>`));
+    };
+    const meta = await fetchMetadata(
+      { url: "https://example.com/a", canonicalUrl: "https://example.com/a" },
+      fetchImpl,
+    );
+    expect(meta.title).toBe("Second try");
+    expect(calls).toBe(2);
+  });
+
   it("returns type other with no title for non-HTML responses", async () => {
     const fetchImpl = stubFetch({
       "https://example.com/file.pdf": () =>

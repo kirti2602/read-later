@@ -13,6 +13,8 @@ const WORDS_PER_MINUTE = 230;
 const FETCH_TIMEOUT_MS = 5000;
 const MAX_HTML_BYTES = 2 * 1024 * 1024;
 const MAX_TITLE_CHARS = 120;
+// One retry absorbs dropped connections and timeouts, which are usually transient.
+const MAX_ATTEMPTS = 2;
 const USER_AGENT = "Mozilla/5.0 (compatible; ReadLater/1.0)";
 
 const hostnameOf = (url: string) => new URL(url).hostname.replace(/^www\./, "");
@@ -158,17 +160,24 @@ export async function fetchMetadata(
     estMinutes: null,
   });
 
-  try {
-    if (isYouTube(parsed)) return await youTubeMetadata(canonicalUrl, fetchImpl);
-    if (isXPost(parsed)) return await xPostMetadata(canonicalUrl, fetchImpl);
+  const attempt = async (): Promise<LinkMetadata> => {
+    if (isYouTube(parsed)) return youTubeMetadata(canonicalUrl, fetchImpl);
+    if (isXPost(parsed)) return xPostMetadata(canonicalUrl, fetchImpl);
 
     const html = await fetchHtml(url, fetchImpl);
     if (html === null) return empty("other", hostnameOf(url));
     const { title, site, thumbnailUrl, type, estMinutes } = parseHtml(html, url);
     return { title, site, thumbnailUrl, type, estMinutes };
-  } catch {
-    if (isYouTube(parsed)) return empty("video", "YouTube");
-    if (isXPost(parsed)) return empty("thread", "X");
-    return empty("other", hostnameOf(url));
+  };
+
+  for (let tryNumber = 1; tryNumber <= MAX_ATTEMPTS; tryNumber++) {
+    try {
+      return await attempt();
+    } catch (error) {
+      console.warn(`Link preview attempt ${tryNumber}/${MAX_ATTEMPTS} failed`, url, error);
+    }
   }
+  if (isYouTube(parsed)) return empty("video", "YouTube");
+  if (isXPost(parsed)) return empty("thread", "X");
+  return empty("other", hostnameOf(url));
 }

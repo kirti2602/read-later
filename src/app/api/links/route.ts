@@ -22,7 +22,8 @@ export async function POST(request: Request) {
 
   try {
     const { link, result } = await saveLink(db, user, rawUrl, "web");
-    if (result === "saved") {
+    // Re-fetching on restore lets delete + re-save repair a preview that failed earlier.
+    if (result === "saved" || result === "restored") {
       // The link is already saved; a preview failure must not turn this into an error.
       const preview = enrichLink(db, link).catch((error) =>
         console.error("Link preview failed", link.id, error),
