@@ -1,4 +1,5 @@
 import NextLink from "next/link";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { verifyDoneToken } from "@/digest/token";
 import { doneSecret } from "@/digest/config";
@@ -24,6 +25,8 @@ export default function DonePage({ params }: { params: Promise<{ token: string }
 
 async function DoneBody({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
+  // Token expiry reads the clock, which must happen per request, not at build time.
+  await connection();
   if (!verifyDoneToken(token, doneSecret())) {
     return (
       <div role="alert">
