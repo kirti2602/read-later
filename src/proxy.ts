@@ -22,8 +22,9 @@ export async function proxy(request: NextRequest) {
   const signedIn = Boolean(data?.claims);
   const { pathname } = request.nextUrl;
 
-  // API routes answer 401 themselves instead of redirecting.
-  if (!signedIn && pathname !== "/login" && !pathname.startsWith("/api/")) {
+  // API routes answer 401 themselves; email Done links carry their own signed permission.
+  const isPublic = pathname === "/login" || pathname.startsWith("/api/") || pathname.startsWith("/done/");
+  if (!signedIn && !isPublic) {
     return redirectKeepingCookies("/login", request, response);
   }
   if (signedIn && pathname === "/login") {
