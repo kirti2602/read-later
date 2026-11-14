@@ -22,16 +22,28 @@ export async function POST(request: Request) {
 
   try {
     const { link, result } = await saveLink(db, user, rawUrl, "web");
+    let previewPending = false;
     // Re-fetching on restore lets delete + re-save repair a preview that failed earlier.
     if (result === "saved" || result === "restored") {
       // The link is already saved; a preview failure must not turn this into an error.
-      const preview = enrichLink(db, link).catch((error) =>
-        console.error("Link preview failed", link.id, error),
+      const preview = enrichLink(db, link).then(
+        () => true,
+        (error) => {
+          console.error("Link preview failed", link.id, error);
+          return true;
+        },
       );
       after(() => preview);
-      await Promise.race([preview, new Promise((resolve) => setTimeout(resolve, PREVIEW_WAIT_MS))]);
+      const finished = await Promise.race([
+        preview,
+        new Promise<false>((resolve) => setTimeout(() => resolve(false), PREVIEW_WAIT_MS)),
+      ]);
+      previewPending = !finished;
     }
-    return Response.json({ link, result }, { status: result === "already_saved" ? 200 : 201 });
+    return Response.json(
+      { link, result, previewPending },
+      { status: result === "already_saved" ? 200 : 201 },
+    );
   } catch (error) {
     if (error instanceof InvalidUrlError) {
       return Response.json({ error: error.message }, { status: 400 });

@@ -9,6 +9,9 @@ const MESSAGES = {
   already_saved: "Already saved this week",
 } as const;
 
+// A slow preview takes up to two 5s fetch attempts (src/links/metadata.ts).
+const PREVIEW_RECHECK_MS = [3000, 7000, 12000];
+
 export function SaveForm() {
   const router = useRouter();
   const [url, setUrl] = useState("");
@@ -41,6 +44,9 @@ export function SaveForm() {
         setMessage({ text, isError: false });
         setUrl("");
         router.refresh();
+        if (body.previewPending) {
+          PREVIEW_RECHECK_MS.forEach((ms) => setTimeout(() => router.refresh(), ms));
+        }
       } catch {
         setMessage({ text: "Network error, try again.", isError: true });
       }

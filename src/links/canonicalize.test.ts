@@ -61,6 +61,12 @@ describe("canonicalizeUrl", () => {
     expect(canon("https://example.com/a?s=20&t=abc")).toBe("https://example.com/a?s=20&t=abc");
   });
 
+  it("keeps only the video id on YouTube watch links", () => {
+    expect(
+      canon("https://www.youtube.com/watch?v=WHqbqzqeskw&list=RDWHqbqzqeskw&start_radio=1&pp=abc&t=42s"),
+    ).toBe("https://youtube.com/watch?v=WHqbqzqeskw");
+  });
+
   it("maps youtu.be and mobile YouTube to youtube.com/watch and drops si", () => {
     expect(canon("https://youtu.be/dQw4w9WgXcQ?si=xyz")).toBe(
       "https://youtube.com/watch?v=dQw4w9WgXcQ",

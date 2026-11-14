@@ -47,8 +47,11 @@ export function canonicalizeUrl(input: string): { url: string; canonicalUrl: str
     c.searchParams.set("v", videoId);
   }
 
+  // A video is identified by `v` alone; list, radio, timestamp etc. are the same video.
+  const isYouTubeWatch = c.hostname === "youtube.com" && c.pathname === "/watch";
   const kept = [...c.searchParams].filter(
     ([key]) =>
+      (!isYouTubeWatch || key === "v") &&
       !key.startsWith("utm_") &&
       !TRACKING_PARAMS.has(key) &&
       !(c.hostname === "x.com" && X_SHARE_PARAMS.has(key)),
