@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { windowStart } from "./week-window";
+import { isValidTimeZone, windowStart } from "./week-window";
+
+describe("isValidTimeZone", () => {
+  it("accepts IANA names and rejects anything else", () => {
+    expect(isValidTimeZone("Asia/Kolkata")).toBe(true);
+    expect(isValidTimeZone("Asia/Calcutta")).toBe(true);
+    expect(isValidTimeZone("Mars/Base")).toBe(false);
+    expect(isValidTimeZone("")).toBe(false);
+  });
+});
 
 const india = { timeZone: "Asia/Kolkata", digestDay: 6, digestTime: "09:00" };
 const newYork = { timeZone: "America/New_York", digestDay: 6, digestTime: "09:00:00" };

@@ -139,9 +139,12 @@ async function xPostMetadata(url: string, fetchImpl: typeof fetch): Promise<Link
   return { title, site: "X", thumbnailUrl: null, type: "thread", estMinutes: null };
 }
 
-/** Best-effort preview for a canonical URL. Never throws: failures yield nulls. */
+/**
+ * Best-effort preview. YouTube/X are detected on `canonicalUrl`; other pages are
+ * fetched at the original `url`. Never throws: failures yield nulls.
+ */
 export async function fetchMetadata(
-  canonicalUrl: string,
+  { url, canonicalUrl }: { url: string; canonicalUrl: string },
   fetchImpl: typeof fetch = fetch,
 ): Promise<LinkMetadata> {
   const parsed = new URL(canonicalUrl);
@@ -157,13 +160,13 @@ export async function fetchMetadata(
     if (isYouTube(parsed)) return await youTubeMetadata(canonicalUrl, fetchImpl);
     if (isXPost(parsed)) return await xPostMetadata(canonicalUrl, fetchImpl);
 
-    const html = await fetchHtml(canonicalUrl, fetchImpl);
-    if (html === null) return empty("other", hostnameOf(canonicalUrl));
-    const { durationSeconds: _, ...meta } = parseHtml(html, canonicalUrl);
-    return meta;
+    const html = await fetchHtml(url, fetchImpl);
+    if (html === null) return empty("other", hostnameOf(url));
+    const { title, site, thumbnailUrl, type, estMinutes } = parseHtml(html, url);
+    return { title, site, thumbnailUrl, type, estMinutes };
   } catch {
     if (isYouTube(parsed)) return empty("video", "YouTube");
     if (isXPost(parsed)) return empty("thread", "X");
-    return empty("other", hostnameOf(canonicalUrl));
+    return empty("other", hostnameOf(url));
   }
 }

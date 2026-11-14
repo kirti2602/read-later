@@ -74,7 +74,7 @@ describe("fetchMetadata", () => {
       "https://youtube.com/watch": () =>
         htmlResponse(html(`<meta itemprop="duration" content="PT4M13S">`)),
     });
-    expect(await fetchMetadata("https://youtube.com/watch?v=x", fetchImpl)).toEqual({
+    expect(await fetchMetadata({ url: "https://youtube.com/watch?v=x", canonicalUrl: "https://youtube.com/watch?v=x" }, fetchImpl)).toEqual({
       title: "A talk",
       site: "YouTube",
       thumbnailUrl: "https://i.ytimg.com/vi/x/hq.jpg",
@@ -88,11 +88,22 @@ describe("fetchMetadata", () => {
     const fetchImpl = stubFetch({
       "https://publish.x.com/oembed": () => Response.json({ author_name: "Someone", html: tweet }),
     });
-    const meta = await fetchMetadata("https://x.com/someone/status/1", fetchImpl);
+    const meta = await fetchMetadata({ url: "https://x.com/someone/status/1", canonicalUrl: "https://x.com/someone/status/1" }, fetchImpl);
     expect(meta.type).toBe("thread");
     expect(meta.site).toBe("X");
     expect(meta.title!.length).toBeLessThanOrEqual(120);
     expect(meta.title!.startsWith("long long")).toBe(true);
+  });
+
+  it("fetches ordinary pages at the original URL, not the canonical one", async () => {
+    const fetchImpl = stubFetch({
+      "http://www.old.example/a": () => htmlResponse(html(`<title>Old site</title>`)),
+    });
+    const meta = await fetchMetadata(
+      { url: "http://www.old.example/a", canonicalUrl: "https://old.example/a" },
+      fetchImpl,
+    );
+    expect(meta.title).toBe("Old site");
   });
 
   it("returns type other with no title for non-HTML responses", async () => {
@@ -100,7 +111,7 @@ describe("fetchMetadata", () => {
       "https://example.com/file.pdf": () =>
         new Response("%PDF", { headers: { "content-type": "application/pdf" } }),
     });
-    expect(await fetchMetadata("https://example.com/file.pdf", fetchImpl)).toEqual({
+    expect(await fetchMetadata({ url: "https://example.com/file.pdf", canonicalUrl: "https://example.com/file.pdf" }, fetchImpl)).toEqual({
       title: null,
       site: "example.com",
       thumbnailUrl: null,
@@ -113,13 +124,13 @@ describe("fetchMetadata", () => {
     const fetchImpl: typeof fetch = async () => {
       throw new Error("timeout");
     };
-    expect(await fetchMetadata("https://x.com/someone/status/1", fetchImpl)).toEqual({
+    expect(await fetchMetadata({ url: "https://x.com/someone/status/1", canonicalUrl: "https://x.com/someone/status/1" }, fetchImpl)).toEqual({
       title: null,
       site: "X",
       thumbnailUrl: null,
       type: "thread",
       estMinutes: null,
     });
-    expect((await fetchMetadata("https://example.com/a", fetchImpl)).type).toBe("other");
+    expect((await fetchMetadata({ url: "https://example.com/a", canonicalUrl: "https://example.com/a" }, fetchImpl)).type).toBe("other");
   });
 });
