@@ -1,0 +1,114 @@
+/* Hallmark · shape: app screen · genre: playful · theme: Hum (by request) · redesign: full
+ * nav: sidebar on desktop, bottom tab bar on phones · signature: the week's card grid, each link a round card with its picture, type and length set on the image · states: loading, empty, error, full, preview pending, undo, finished nudge, player
+ * axes: light/rounded-sans/chromatic-yellow · posture: full-palette (pear action, blue links and focus, mint done, coral sparingly) · modes: light+dark · motion: spring on the primary only, snap elsewhere · contrast: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V5 · weakest: R, cards carry badge, duration, favicon and actions; kept every extra on the image or behind hover so the title still leads */
+/* Hallmark · waive 26b · globals.css @utility stock declares &:active, nested where the static tier cannot see it · every card-stock button presses flat on :active through the stock utility */
+/* Hallmark · dismissed 28a · thumbnails are lazy below the first row; the first paint is the sheet heading and save row */
+@import "tailwindcss";
+@import "./tokens.css";
+@import "./base.css" layer(base);
+
+@layer base {
+  body {
+    background: var(--grain), var(--color-paper);
+    color: var(--color-ink-2);
+    font-weight: 500;
+  }
+
+  h1,
+  h2,
+  h3 {
+    color: var(--color-ink);
+  }
+}
+
+@utility num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Expands a compact control to a 44px touch target without changing its look. */
+@utility hit {
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -6px -4px;
+  }
+}
+
+/* Hum's card stock: a solid edge below that rises on hover and presses flat on click. */
+@utility stock {
+  --edge: 4px;
+  box-shadow: 0 var(--edge) 0 0 var(--stock-edge, var(--color-edge));
+  transition:
+    translate var(--dur-micro) var(--ease-snap),
+    box-shadow var(--dur-micro) var(--ease-snap);
+
+  @media (hover: hover) {
+    &:hover {
+      --edge: 6px;
+      translate: 0 -2px;
+    }
+  }
+
+  &:active {
+    --edge: 1px;
+    translate: 0 3px;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@utility shimmer {
+  background: linear-gradient(90deg, var(--color-paper-2) 25%, var(--color-paper-3) 50%, var(--color-paper-2) 75%);
+  background-size: 200% 100%;
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: shimmer 1.4s linear infinite;
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility animate-pop {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: pop 320ms var(--ease-spring) both;
+  }
+}
+
+@utility animate-rise {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: rise 320ms var(--ease-snap) both;
+  }
+}

@@ -5,3 +5,4 @@
 - Stack: Next.js (TypeScript) on Vercel, Supabase Postgres, Resend for email.
 - Build one phase at a time. Propose a plan and wait for my OK before coding.
 - Keep API keys in .env.local, never in code. Commit after each working step.
+- UI follows DESIGN.md; reuse the tokens in src/app/tokens.css, never new colours or fonts.
