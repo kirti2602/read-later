@@ -84,7 +84,7 @@ export function LinkCard({ link, now, timeZone, loading, nudge, error, onOpen, o
         ) : null}
       </a>
 
-      <div className="flex flex-col gap-2 px-4 pt-3.5 pb-4">
+      <div className="flex flex-1 flex-col gap-2 px-4 pt-3.5 pb-4">
         <div className="flex min-w-0 items-center gap-2 text-sm text-muted">
           <Favicon url={link.url} site={site} />
           <span className="truncate text-ink-2">{site}</span>
@@ -125,7 +125,7 @@ export function LinkCard({ link, now, timeZone, loading, nudge, error, onOpen, o
         )}
 
         {nudge && onDone ? (
-          <div role="status" className="pointer-events-none relative z-(--z-raised) mt-1 flex items-center justify-between gap-2 rounded-control bg-accent/35 py-1.5 pr-1.5 pl-3 text-sm text-ink">
+          <div role="status" className="pointer-events-none relative z-(--z-raised) mt-auto flex pt-1 items-center justify-between gap-2 rounded-control bg-accent/35 py-1.5 pr-1.5 pl-3 text-sm text-ink">
             <span className="font-semibold">Finished it?</span>
             <span className="pointer-events-auto flex items-center gap-1">
               <button type="button" onClick={onDismissNudge} className="hit h-9 rounded-control px-2.5 text-sm font-medium text-ink-2 hover:bg-paper-2">
@@ -135,7 +135,7 @@ export function LinkCard({ link, now, timeZone, loading, nudge, error, onOpen, o
             </span>
           </div>
         ) : (
-          <div className="pointer-events-none relative z-(--z-raised) mt-1 flex items-center justify-between">
+          <div className="pointer-events-none relative z-(--z-raised) mt-auto flex pt-1 items-center justify-between">
             <span className="flex items-center gap-1 text-sm font-semibold text-link">
               {meta.verb}
               <VerbIcon aria-hidden className="size-4" />
