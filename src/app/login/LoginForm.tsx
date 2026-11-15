@@ -16,6 +16,8 @@ export function LoginForm() {
     <form
       action={(formData) => {
         formData.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone);
+        // Read at submit rather than render so the static login page needs no search-param boundary.
+        formData.set("next", new URLSearchParams(window.location.search).get("next") ?? "");
         return formAction(formData);
       }}
       className="flex flex-col gap-4 rounded-card bg-card p-6 shadow-[var(--shadow-card)] sm:p-8"

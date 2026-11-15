@@ -2,6 +2,7 @@
 
 import { isAuthRetryableFetchError } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
+import { safeNextPath } from "@/auth/next-path";
 import { createServerSupabase } from "@/auth/supabase-server";
 import { isValidTimeZone } from "@/links/week-window";
 
@@ -37,7 +38,7 @@ export async function signIn(_prev: LoginState, formData: FormData): Promise<Log
     if (tzError) console.error("Could not save timezone", tzError);
   }
 
-  redirect("/");
+  redirect(safeNextPath(String(formData.get("next") ?? "")));
 }
 
 export async function signOut(): Promise<void> {
