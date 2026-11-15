@@ -10,6 +10,8 @@ import { windowStart } from "@/links/week-window";
 import { CommandPalette } from "@/shell/CommandPalette";
 import { MobileNav } from "@/shell/MobileNav";
 import { Sidebar } from "@/shell/Sidebar";
+import { appUrl } from "@/digest/config";
+import { CaptureGuide } from "./CaptureGuide";
 import { TestDigestButton } from "./TestDigestButton";
 
 export const metadata = { title: "Settings · Read Later" };
@@ -95,6 +97,8 @@ async function Settings() {
               <TestDigestButton />
             </div>
           </section>
+
+          <CaptureGuide appUrl={appUrl()} />
         </main>
       </div>
       <CommandPalette type="all" />

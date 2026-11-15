@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { safeNextPath } from "@/auth/next-path";
 import { supabaseEnv } from "@/auth/supabase-env";
 
 /** Refreshes the Supabase session cookie and sends signed-out visitors to /login. */
@@ -25,10 +26,12 @@ export async function proxy(request: NextRequest) {
   // API routes answer 401 themselves; email Done links carry their own signed permission.
   const isPublic = pathname === "/login" || pathname.startsWith("/api/") || pathname.startsWith("/done/");
   if (!signedIn && !isPublic) {
-    return redirectKeepingCookies("/login", request, response);
+    // Come back here after signing in (e.g. a phone share that hit a logged-out browser).
+    const next = pathname === "/" && !request.nextUrl.search ? "" : `?next=${encodeURIComponent(pathname + request.nextUrl.search)}`;
+    return redirectKeepingCookies(`/login${next}`, request, response);
   }
   if (signedIn && pathname === "/login") {
-    return redirectKeepingCookies("/", request, response);
+    return redirectKeepingCookies(safeNextPath(request.nextUrl.searchParams.get("next")), request, response);
   }
   return response;
 }
@@ -41,5 +44,6 @@ function redirectKeepingCookies(path: string, request: NextRequest, response: Ne
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
+  // The app manifest must stay public: browsers fetch it without cookies when offering to install.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"],
 };
